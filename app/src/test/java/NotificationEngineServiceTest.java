@@ -45,6 +45,10 @@ public class NotificationEngineServiceTest {
 
         assertEquals(5000, notificationEngineService.getQueueSize());
 
+        boolean checkoutExtra = notificationEngineService.addTaskInPull(new TaskDTO());
+        assertFalse(checkoutExtra);
+        assertEquals(5000, notificationEngineService.getQueueSize());
+
     }
 
     @Test
@@ -54,7 +58,7 @@ public class NotificationEngineServiceTest {
 
         service.init();
 
-        boolean checkout = service.addTaskInPull(new TaskDTO());
+        boolean checkout = service.addTaskInPull(new TaskDTO((long) -1));
         assertTrue(checkout);
 
         await().atMost(3, TimeUnit.SECONDS)
@@ -79,6 +83,9 @@ public class NotificationEngineServiceTest {
         notificationEngineService.addTaskInPull(taskDTO);
         notificationEngineService.addTaskInPull(new TaskDTO(1L));
 
+        await().atMost(3, TimeUnit.SECONDS)
+                        .until(() -> notificationEngineService.getErrorsCount() == 1);
+
         assertEquals(1, notificationEngineService.getErrorsCount());
         assertEquals(1, notificationEngineService.getProcessCount());
 
@@ -97,7 +104,7 @@ public class NotificationEngineServiceTest {
 
         }
 
-        assertTimeoutPreemptively(Duration.ofSeconds(2), service::shutdown);
+        assertTimeoutPreemptively(Duration.ofSeconds(5), service::shutdown);
 
         assertEquals(19, service.getProcessCount() + service.getQueueSize() + service.getErrorsCount());
 

@@ -12,4 +12,10 @@ import lombok.Setter;
 public class TaskDTO {
 
     private Long id;
+
+    private String email;
+
+    private String name;
+
+    private String body;
 }
