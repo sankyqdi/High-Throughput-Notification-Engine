@@ -18,4 +18,10 @@ public class TaskDTO {
     private String name;
 
     private String body;
+
+    public TaskDTO(Long id) {
+
+        this.id = id;
+
+    }
 }
