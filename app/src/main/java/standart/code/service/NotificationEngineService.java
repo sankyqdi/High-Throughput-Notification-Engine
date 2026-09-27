@@ -1,7 +1,5 @@
 package standart.code.service;
 
-import com.sun.jdi.ThreadReference;
-import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import standart.code.dto.TaskDTO;
 import standart.code.error.ServerError;
@@ -10,12 +8,9 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
 
 @Slf4j
-@Getter
 public class NotificationEngineService {
 
     private final AtomicLong processCount = new AtomicLong(0);
-
-    private Integer queueSize;
 
     private final BlockingQueue<TaskDTO> taskQueue = new ArrayBlockingQueue<>(5000);
 
@@ -23,7 +18,7 @@ public class NotificationEngineService {
 
     private final int threadCount = 10;
 
-    private final Integer queueCopacity = 5000;
+    private final Integer queueCapacity = 5000;
 
     private final AtomicLong errorsCount = new AtomicLong(0);
 
@@ -108,7 +103,7 @@ public class NotificationEngineService {
 
         try {
 
-            if (taskDTO.getId() > 0) {
+            if (taskDTO.getId() < 0) {
 
                 throw new ServerError();
 
@@ -150,5 +145,7 @@ public class NotificationEngineService {
     }
 
 
-
+    public Integer getQueueCopacity() {
+        return queueCapacity;
+    }
 }
