@@ -1,17 +1,15 @@
 package standart.code.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
+@Builder
 public class TaskDTO {
 
-    private Long id;
+//    private Long id;
 
     private String email;
 
@@ -19,9 +17,4 @@ public class TaskDTO {
 
     private String body;
 
-    public TaskDTO(Long id) {
-
-        this.id = id;
-
-    }
 }

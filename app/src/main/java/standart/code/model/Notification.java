@@ -19,8 +19,8 @@ public class Notification {
     private Long id;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "user_email")
-    private User userEmail;
+    @Column(name = "user_type")
+    private User userType;
 
     @Column(name = "email")
     private String email;
