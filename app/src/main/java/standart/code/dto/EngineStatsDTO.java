@@ -1,9 +1,11 @@
 package standart.code.dto;
 
 import lombok.Builder;
+import lombok.Data;
 
 import java.time.OffsetDateTime;
 
+@Data
 @Builder
 public class EngineStatsDTO {
 

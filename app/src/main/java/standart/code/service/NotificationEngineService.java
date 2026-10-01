@@ -1,6 +1,10 @@
 package standart.code.service;
 
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
 import standart.code.dto.TaskDTO;
 import standart.code.error.ServerError;
 
@@ -8,7 +12,11 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
 
 @Slf4j
+@Service
+@RequiredArgsConstructor
 public class NotificationEngineService {
+
+    private final YandexEmailService emailService;
 
     private final AtomicLong processCount = new AtomicLong(0);
 
@@ -36,6 +44,7 @@ public class NotificationEngineService {
 
     }
 
+    @PostConstruct
     public void init() {
 
         this.workerPool = Executors.newFixedThreadPool(threadCount);
@@ -73,6 +82,7 @@ public class NotificationEngineService {
         }
     }
 
+    @PreDestroy
     public void shutdown() {
 
         this.isShutdown = true;
@@ -102,25 +112,15 @@ public class NotificationEngineService {
     private void processing(TaskDTO taskDTO) {
 
         try {
-
-            if (taskDTO.getId() < 0) {
-
-                throw new ServerError();
-
-            }
-
-            Thread.sleep(50);
+            emailService.sendEmail(taskDTO.getEmail(), taskDTO.getBody(), taskDTO.getUserType());
 
             processCount.incrementAndGet();
 
-        } catch (ServerError e) {
+            log.info("Задача \" {} \" успешно обработана и отправлена", taskDTO.getName());
 
-            log.info("Обработка задачи {} не прошла, ошибка {}", taskDTO.getId(), e.getMessage());
-            errorsCount.incrementAndGet();
+        } catch (Exception e) {
 
-        } catch (InterruptedException e) {
-
-            Thread.currentThread().interrupt();
+            log.error("Сообщение {} не отправлено. {}", taskDTO.getName(), e.getMessage());
 
         }
 

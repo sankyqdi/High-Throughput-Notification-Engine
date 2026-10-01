@@ -1,6 +1,7 @@
 package standart.code.dto;
 
 import lombok.*;
+import standart.code.model.User;
 
 @Getter
 @Setter
@@ -10,6 +11,7 @@ import lombok.*;
 public class TaskDTO {
 
 //    private Long id;
+    private User userType;
 
     private String email;
 
