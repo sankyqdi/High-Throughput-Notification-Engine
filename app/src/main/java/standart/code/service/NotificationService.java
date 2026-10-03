@@ -4,10 +4,8 @@ import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
-import standart.code.dto.NotificationCreatedDTO;
-import standart.code.dto.NotificationDTO;
-import standart.code.dto.NotificationRequest;
-import standart.code.dto.TaskDTO;
+import standart.code.dto.*;
+import standart.code.error.QueueOverflow;
 import standart.code.mapper.NotificationMapper;
 import standart.code.model.Notification;
 import standart.code.repository.NotificationRepository;
@@ -25,7 +23,9 @@ public class NotificationService implements NotificationServiceInterface{
 
     private final NotificationMapper notificationMapper;
 
-    public Notification dataAcquisition(NotificationRequest notificationRequest) {
+    private final EngineStatsService engineStatsService;
+
+    public EngineStatsDTO dataAcquisition(NotificationRequest notificationRequest) {
 
         int count = 0;
 
@@ -41,9 +41,8 @@ public class NotificationService implements NotificationServiceInterface{
 
             create(notificationCreatedDTO);
 
-
-
             TaskDTO taskDTO = TaskDTO.builder()
+                    .userType(notificationRequest.getUserType())
                     .email(email)
                     .name("message" + (count + 1))
                     .body(notificationRequest.getMessage())
@@ -53,17 +52,21 @@ public class NotificationService implements NotificationServiceInterface{
 
             if (!added) {
 
-
+                throw new  QueueOverflow("Очередь переполнена");
 
             } else {
 
                 count++;
 
             }
-
-
         }
+        EngineStatsRequest engineStatsRequest = EngineStatsRequest.builder()
+                .errorsCount(notificationEngineService.getErrorsCount())
+                .processCount(notificationEngineService.getProcessCount())
+                .queueCapacity(notificationEngineService.getQueueCopacity())
+                .build();
 
+        return engineStatsService.create(engineStatsRequest);
     }
 
     @Override
