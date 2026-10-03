@@ -1,29 +1,37 @@
-Notification Engine Service 🚀
+# Notification Engine Service 🚀
 
-High-performance asynchronous email notification service. Built with Java 21 and Spring Boot 3, it uses a custom multi-threaded in-memory processing engine (ExecutorService + ArrayBlockingQueue) to smooth out traffic spikes and process outbound emails asynchronously without blocking the main HTTP thread.
-🛠 Tech Stack
+High-performance, scalable, asynchronous email notification engine. Built with **Java** and **Spring Boot**, this service features a custom multi-threaded processing pipeline (Producer-Consumer pattern via `ExecutorService` & `ArrayBlockingQueue`) paired with dynamic multi-account SMTP dispatch (Yandex/Gmail).
 
-    Core: Java 21, Spring Boot 3.3.4
+It completely decouples database persistence from mail transport, preventing external SMTP latency from blocking HTTP requests.
 
-    Data & Persistence: Spring Data JPA, PostgreSQL
+---
 
-    Concurrency: Java ExecutorService (Fixed Thread Pool), ArrayBlockingQueue
+## 🛠 Tech Stack
 
-    Validation & DTO Mapping: Spring Validation, MapStruct 1.6.3, Lombok
+- **Core & Runtime:** Java, Spring Boot
+- **Database & Persistence:** Spring Data JPA, PostgreSQL, Liquibase
+- **Concurrency & Async Pipeline:** Custom Worker Pool (`ExecutorService`), Bounded Queue (`ArrayBlockingQueue`), Thread Safety (`AtomicLong`, `ConcurrentHashMap`)
+- **Mail Transport:** Spring Boot Starter Mail (`JavaMailSender`), Dynamic Multi-Account SMTP Configuration
+- **Data Protection & Mapping:** SHA-256 Email Hashing (`EmailHasher`), MapStruct, Lombok
+- **Logging & Monitoring:** Logback Classic, Real-time Engine Metrics (`EngineStatsDTO`)
+- **Testing:** JUnit 5, Awaitility
+- **Build System:** Gradle (Kotlin DSL)
 
-    Logging: Logback Classic 1.5.18
+---
 
-    Testing: JUnit 5, Awaitility 4.2.2 (for testing asynchronous pipelines)
+1. **Batch Ingestion & Decoupling:** `NotificationService` accepts bulk notification requests, normalizes sensitive data by hashing email addresses via `EmailHasher` (SHA-256) for compliant database storage, and persists the notification[cite: 7].
+2. **Task Enqueueing:** Unhashed dispatch tasks (`TaskDTO`) are offered to `NotificationEngineService`'s bounded `ArrayBlockingQueue`[cite: 7, 8].
+3. **Multi-Threaded Consumer Pool:** A managed pool of worker threads continuously dequeues tasks without blocking client HTTP threads[cite: 8].
+4. **Dynamic Multi-Account SMTP Delivery:** `YandexEmailService` dynamically instantiates and caches (`ConcurrentHashMap`) `JavaMailSender` instances for distinct user accounts, executing secure SMTP deliveries[cite: 6, 9].
+5. **Real-time Observability:** Every batch operation returns an `EngineStatsDTO` snapshot containing live engine health metrics (processed count, total errors, queue capacity, and current queue utilization)[cite: 8].
 
-    Build System: Gradle (Kotlin DSL)
+---
 
-🏗 Architecture & Core Workflow
+## 🚀 Key Features
 
-    REST Controller receives notification requests (single or bulk dispatches) and immediately returns an HTTP 202 Accepted response.
-
-    In-Memory Engine (NotificationEngineService) accepts task objects (TaskDTO), normalizes and hashes sensitive customer data (EmailHasher), and places them into a thread-safe bounded ArrayBlockingQueue.
-
-    Worker Pool (10 thread workers) asynchronously dequeues tasks from memory and executes physical email delivery to target recipients.
-
-    Persistence Layer logs processing statuses, execution history, and engine metrics (EngineStats) into PostgreSQL.
+- **Decoupled Persistence & Dispatch:** Database logging uses hashed PII while the in-memory engine handles raw email addresses for delivery[cite: 7, 8].
+- **Dynamic Multi-Account SMTP:** Supports sending emails from multiple different Yandex/Gmail credentials on the fly with built-in sender instance caching[cite: 6, 9].
+- **Backpressure Protection:** Uses a bounded `ArrayBlockingQueue` (5000 tasks max) to smooth out traffic spikes and protect memory usage[cite: 8].
+- **Graceful Lifecycle Management:** Integrated with Spring's `@PostConstruct` and `@PreDestroy` for clean worker pool startup and graceful shutdown termination[cite: 8].
+- **Instant Health Telemetry:** Provides immediate stats on queue load, throughput, and
 
