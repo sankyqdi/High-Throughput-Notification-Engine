@@ -16,4 +16,6 @@ public class ApiRoutes {
     //к регистрации аккаунта
 
     public static final String API_REGISTER = "/api/v1/senders";
+
+    public static final String USER = "/api/user";
 }
