@@ -34,7 +34,7 @@ public class NotificationService implements NotificationServiceInterface{
             String hashedEmail = EmailHasher.hashEmailSha256(email);
 
             NotificationCreatedDTO notificationCreatedDTO = NotificationCreatedDTO.builder()
-                    .userType(notificationRequest.getUserType())
+                    .senderAccount(notificationRequest.getSender())
                     .email(hashedEmail)
                     .message(notificationRequest.getMessage())
                     .build();
@@ -42,14 +42,14 @@ public class NotificationService implements NotificationServiceInterface{
             create(notificationCreatedDTO);
 
             TaskDTO taskDTO = TaskDTO.builder()
-                    .userType(notificationRequest.getUserType())
+                    .senderAccount(notificationRequest.getSender())
                     .email(email)
                     .name("message" + (count + 1))
                     .body(notificationRequest.getMessage())
                     .build();
 
             boolean added = notificationEngineService.addTaskInPull(taskDTO);
-
+ 
             if (!added) {
 
                 throw new  QueueOverflow("Очередь переполнена");
@@ -60,13 +60,14 @@ public class NotificationService implements NotificationServiceInterface{
 
             }
         }
-        EngineStatsRequest engineStatsRequest = EngineStatsRequest.builder()
+
+        return EngineStatsDTO.builder()
                 .errorsCount(notificationEngineService.getErrorsCount())
                 .processCount(notificationEngineService.getProcessCount())
-                .queueCapacity(notificationEngineService.getQueueCopacity())
+                .queueCapacity(notificationEngineService.getQueueCapacity())
+                .currentQueueSize(notificationEngineService.getQueueSize())
+                .addedInThisBatch(count)
                 .build();
-
-        return engineStatsService.create(engineStatsRequest);
     }
 
     @Override

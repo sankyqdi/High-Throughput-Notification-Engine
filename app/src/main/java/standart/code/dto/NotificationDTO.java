@@ -1,17 +1,16 @@
 package standart.code.dto;
 
-import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.*;
-import standart.code.model.User;
+import standart.code.model.SenderAccount;
 
 @Data
 @Builder
 public class NotificationDTO {
 
     @NotNull(message = "отправитель обязателен")
-    private User user;
+    private SenderAccount sender;
 
     @NotNull(message = "почта обязательна")
     private String email;

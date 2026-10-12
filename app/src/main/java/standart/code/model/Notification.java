@@ -18,9 +18,9 @@ public class Notification {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "user_type")
-    private User userType;
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinColumn(name = "account_id", nullable = false)
+    private SenderAccount senderAccount;
 
     @Column(name = "email")
     private String email;

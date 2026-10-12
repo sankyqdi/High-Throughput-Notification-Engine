@@ -6,7 +6,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Builder;
 import lombok.Data;
-import standart.code.model.User;
+import standart.code.model.SenderAccount;
 
 import java.util.List;
 
@@ -15,12 +15,11 @@ import java.util.List;
 public class NotificationRequest {
 
     @NotNull(message = "Отправитель обязателен")
-    private User userType;
+    private SenderAccount sender;
 
     @NotNull(message = "почта обязательна")
     @NotEmpty(message = "список не может быть пустым")
-    @Email(message = "некорректная почта")
-    private List<String> emails;
+    private List<@Email(message = "некорректная почта")String> emails;
 
     @NotNull(message = "сообщение обязательно")
     @Size(max = 1000, message = "Длина должна не превышать 1000 символов")

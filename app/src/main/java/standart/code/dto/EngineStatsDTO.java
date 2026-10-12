@@ -15,6 +15,10 @@ public class EngineStatsDTO {
 
     private int queueCapacity;
 
+    private long currentQueueSize;
+
+    private int addedInThisBatch;
+
     private OffsetDateTime dateTime;
 
 }

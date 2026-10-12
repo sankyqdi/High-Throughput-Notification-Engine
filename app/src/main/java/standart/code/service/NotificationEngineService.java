@@ -112,7 +112,7 @@ public class NotificationEngineService {
     private void processing(TaskDTO taskDTO) {
 
         try {
-            emailService.sendEmail(taskDTO.getEmail(), taskDTO.getBody(), taskDTO.getUserType());
+            emailService.sendEmail(taskDTO.getEmail(), taskDTO.getBody(), taskDTO.getSenderAccount());
 
             processCount.incrementAndGet();
 
@@ -145,7 +145,7 @@ public class NotificationEngineService {
     }
 
 
-    public Integer getQueueCopacity() {
+    public Integer getQueueCapacity() {
         return queueCapacity;
     }
 }

@@ -9,6 +9,6 @@ import java.util.Optional;
 @Repository
 public interface EngineStatsRepository extends JpaRepository<EngineStats, Long> {
 
-    Optional<EngineStats> findTopByOrderByIDDesc();
+    Optional<EngineStats> findTopByOrderByIdDesc();
 
 }
