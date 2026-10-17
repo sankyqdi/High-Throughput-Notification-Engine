@@ -9,8 +9,8 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import standart.code.constant.ApiRoutes;
 import standart.code.dto.ChangePasswordRequest;
-import standart.code.dto.RegisterUserRequest;
 import standart.code.dto.UserResponseDTO;
+import standart.code.model.User;
 import standart.code.service.UserServiceInterface;
 
 @RestController
@@ -20,16 +20,7 @@ public class UserController {
 
     private final UserServiceInterface userService;
 
-    @PostMapping("/register")
-    public ResponseEntity<UserResponseDTO> register (@Valid @RequestBody RegisterUserRequest request) {
-
-        UserResponseDTO dto = userService.register(request);
-
-        return ResponseEntity.status(HttpStatus.CREATED).body(dto);
-
-    }
-
-    @GetMapping("/profile/{id}")
+    @GetMapping("/{id}")
     public ResponseEntity<UserResponseDTO> userProfile (@PathVariable Long id) {
 
         UserResponseDTO dto = userService.getProfile(id);
@@ -39,23 +30,19 @@ public class UserController {
     }
 
     @GetMapping("/me")
-    public ResponseEntity<UserResponseDTO> getCurrentProfile (@AuthenticationPrincipal UserDetails userDetails) {
-
-        UserResponseDTO dto = userService.getCurrentProfile(userDetails.getUsername());
-
-        return ResponseEntity.ok(dto);
-
+    public ResponseEntity<UserResponseDTO> getCurrentProfile (@AuthenticationPrincipal User user) {
+        return ResponseEntity.ok(userService.getCurrentProfile(user.getUsername()));
     }
 
-    @PostMapping("/change-password")
-    public ResponseEntity<Void> changePassword(
-            @AuthenticationPrincipal UserDetails userDetails,
+    @PatchMapping("/change-password")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void changePassword(
+            @AuthenticationPrincipal User user,
             @Valid @RequestBody ChangePasswordRequest request
     ) {
 
-        userService.changePassword(userDetails.getUsername(), request);
+        userService.changePassword(user.getUsername(), request);
 
-        return ResponseEntity.noContent().build();
 
     }
 
