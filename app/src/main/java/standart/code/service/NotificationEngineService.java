@@ -38,7 +38,7 @@ public class NotificationEngineService {
     private final Deque<EngineStatsDTO> metricHistory = new ArrayDeque<>(MAX_HISTORY_SIZE);
     private long lastCapturedProcessCount = 0;
 
-    public boolean addTaskInPull(TaskDTO task) {
+    public boolean addTaskToPool(TaskDTO task) {
 
         if(isShutdown) {
 

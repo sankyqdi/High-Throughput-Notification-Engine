@@ -68,7 +68,7 @@ class NotificationServiceTest {
         when(senderAccountRepository.findByIdAndOwner(10L, user)).thenReturn(Optional.of(sender));
         when(notificationMapper.map(any(NotificationCreatedDTO.class))).thenReturn(new Notification());
         when(notificationRepository.save(any(Notification.class))).thenReturn(new Notification());
-        when(notificationEngineService.addTaskInPull(any())).thenReturn(true);
+        when(notificationEngineService.addTaskToPool(any())).thenReturn(true);
 
         when(notificationEngineService.getErrorsCount()).thenReturn(0L);
         when(notificationEngineService.getProcessCount()).thenReturn(0L);
@@ -83,7 +83,7 @@ class NotificationServiceTest {
 
         verify(senderAccountRepository, times(1)).findByIdAndOwner(10L, user);
         verify(notificationRepository, times(3)).save(any(Notification.class));
-        verify(notificationEngineService, times(3)).addTaskInPull(any());
+        verify(notificationEngineService, times(3)).addTaskToPool(any());
     }
 
     @Test
@@ -106,7 +106,7 @@ class NotificationServiceTest {
                 .isInstanceOf(EntityNotFoundException.class)
                 .hasMessageContaining("999");
 
-        verify(notificationEngineService, never()).addTaskInPull(any());
+        verify(notificationEngineService, never()).addTaskToPool(any());
         verify(notificationRepository, never()).save(any());
     }
 

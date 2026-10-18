@@ -47,14 +47,14 @@ class NotificationEngineServiceTest {
 
     @Test
     @DisplayName("addTaskInPull() должен успешно добавлять задачу в непереполненную очередь")
-    void addTaskInPull_WhenQueueIsNotFull_ShouldReturnTrue() {
+    void addTaskToPool_WhenQueueIsNotFull_ShouldReturnTrue() {
         TaskDTO task = TaskDTO.builder()
                 .email("test@mail.com")
                 .name("Приветственное письмо")
                 .body("Контент")
                 .build();
 
-        boolean isAdded = service.addTaskInPull(task);
+        boolean isAdded = service.addTaskToPool(task);
 
         assertTrue(isAdded);
         assertEquals(1, service.getQueueSize());
@@ -64,12 +64,12 @@ class NotificationEngineServiceTest {
     @DisplayName("addTaskInPull() должен возвращать false при попытке превысить емкость очереди")
     void addTaskInPull_WhenQueueIsFull_ShouldRejectExtraTask() {
         for (int i = 0; i < service.getQueueCapacity(); i++) {
-            service.addTaskInPull(TaskDTO.builder().name("Task " + i).build());
+            service.addTaskToPool(TaskDTO.builder().name("Task " + i).build());
         }
 
         assertEquals(5000, service.getQueueSize());
 
-        boolean isExtraAdded = service.addTaskInPull(TaskDTO.builder().name("Overflow task").build());
+        boolean isExtraAdded = service.addTaskToPool(TaskDTO.builder().name("Overflow task").build());
 
         assertFalse(isExtraAdded);
         assertEquals(5000, service.getQueueSize());
@@ -86,7 +86,7 @@ class NotificationEngineServiceTest {
                 .body("Order #123")
                 .build();
 
-        boolean isAdded = service.addTaskInPull(task);
+        boolean isAdded = service.addTaskToPool(task);
         assertTrue(isAdded);
 
         await().atMost(3, TimeUnit.SECONDS)
@@ -107,8 +107,8 @@ class NotificationEngineServiceTest {
 
         service.init();
 
-        service.addTaskInPull(TaskDTO.builder().name("Faulty task").build());
-        service.addTaskInPull(TaskDTO.builder().name("Normal task").build());
+        service.addTaskToPool(TaskDTO.builder().name("Faulty task").build());
+        service.addTaskToPool(TaskDTO.builder().name("Normal task").build());
 
         await().atMost(3, TimeUnit.SECONDS)
                 .until(() -> service.getProcessCount() == 1);
@@ -124,12 +124,12 @@ class NotificationEngineServiceTest {
         service.init();
 
         for (int i = 1; i <= 20; i++) {
-            service.addTaskInPull(TaskDTO.builder().name("Task " + i).build());
+            service.addTaskToPool(TaskDTO.builder().name("Task " + i).build());
         }
 
         assertTimeoutPreemptively(Duration.ofSeconds(5), () -> service.shutdown());
 
-        boolean isAddedAfterShutdown = service.addTaskInPull(TaskDTO.builder().name("Late task").build());
+        boolean isAddedAfterShutdown = service.addTaskToPool(TaskDTO.builder().name("Late task").build());
         assertFalse(isAddedAfterShutdown);
 
         assertEquals(20, service.getProcessCount() + service.getQueueSize());

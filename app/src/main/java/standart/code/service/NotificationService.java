@@ -60,7 +60,7 @@ public class NotificationService implements NotificationServiceInterface{
                     .body(notificationRequest.getMessage())
                     .build();
 
-            boolean added = notificationEngineService.addTaskInPull(taskDTO);
+            boolean added = notificationEngineService.addTaskToPool(taskDTO);
  
             if (!added) {
 
