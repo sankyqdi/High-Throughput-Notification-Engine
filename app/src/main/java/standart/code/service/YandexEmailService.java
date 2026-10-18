@@ -7,7 +7,7 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 import standart.code.config.MailConfig;
 import standart.code.model.SenderAccount;
-import util.AesCryptoUtil;
+import standart.code.util.AesCryptoUtil;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;

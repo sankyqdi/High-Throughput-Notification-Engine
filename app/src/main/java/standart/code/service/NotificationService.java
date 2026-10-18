@@ -14,7 +14,7 @@ import standart.code.model.SenderAccount;
 import standart.code.model.User;
 import standart.code.repository.NotificationRepository;
 import standart.code.repository.SenderAccountRepository;
-import util.EmailHasher;
+import standart.code.util.EmailHasher;
 
 import java.util.List;
 
