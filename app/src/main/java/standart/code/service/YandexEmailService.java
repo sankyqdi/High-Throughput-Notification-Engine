@@ -32,8 +32,8 @@ public class YandexEmailService {
             });
 
             SimpleMailMessage message = new SimpleMailMessage();
-            message.setFrom(senderEmail);
-            message.setTo(senderAccount.getEmail());
+            message.setFrom(senderAccount.getEmail());
+            message.setTo(senderEmail);
             message.setSubject("Новое уведомление");
             message.setText(body);
 
