@@ -7,15 +7,10 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 import standart.code.config.MailConfig;
 import standart.code.model.SenderAccount;
-import standart.code.model.User;
 import util.AesCryptoUtil;
 
-import java.util.Collection;
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 
 @Slf4j
 @Service
@@ -37,8 +32,8 @@ public class YandexEmailService {
             });
 
             SimpleMailMessage message = new SimpleMailMessage();
-            message.setFrom(senderAccount.getEmail());
-            message.setTo(senderEmail);
+            message.setFrom(senderEmail);
+            message.setTo(senderAccount.getEmail());
             message.setSubject("Новое уведомление");
             message.setText(body);
 
