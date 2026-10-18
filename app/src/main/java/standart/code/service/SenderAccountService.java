@@ -25,9 +25,11 @@ public class SenderAccountService implements SenderAccountServiceInterface {
 
     private final SenderAccountRepository senderAccountRepository;
 
+    private final AesCryptoUtil aesCryptoUtil;
+
     @Override
     public SenderAccountResponseDTO registerAccount(RegisterSenderRequest request, User user) {
-        String encryptedPassword = AesCryptoUtil.encrypt(request.getAppPassword());
+        String encryptedPassword = aesCryptoUtil.encrypt(request.getAppPassword());
 
         SenderAccount senderAccount = mapper.map(request, encryptedPassword);
         senderAccount.setOwner(user);

@@ -17,6 +17,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @RequiredArgsConstructor
 public class YandexEmailService {
 
+    private final AesCryptoUtil aesCryptoUtil;
     private final MailConfig mailConfig;
     private final Map<String, JavaMailSender> senderCache = new ConcurrentHashMap<>();
 
@@ -25,7 +26,7 @@ public class YandexEmailService {
         try {
             JavaMailSender mailSender = senderCache.computeIfAbsent(senderAccount.getEmail(), username -> {
 
-                String rawPassword = AesCryptoUtil.decrypt(senderAccount.getEncryptedPassword());
+                String rawPassword = aesCryptoUtil.decrypt(senderAccount.getEncryptedPassword());
                 return mailConfig.createMail(username, rawPassword);
 
 

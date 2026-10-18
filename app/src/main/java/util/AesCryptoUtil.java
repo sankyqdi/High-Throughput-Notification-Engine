@@ -1,23 +1,28 @@
 package util;
 
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+
 import javax.crypto.Cipher;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 
+@Component
 public class AesCryptoUtil {
 
     private static final String ALGORITHM = "AES";
 
-    private static final String SECRET_KEY = "MyForestLongSecretPonyAndSelly01";
+    @Value("${crypto.aes.secret-key}")
+    private String secretKey;
 
-    public static String encrypt(String plainText) {
+    public  String encrypt(String plainText) {
 
         if (plainText == null) return null;
 
         try {
 
-            SecretKeySpec keySpec = new SecretKeySpec(SECRET_KEY.getBytes(StandardCharsets.UTF_8), ALGORITHM);
+            SecretKeySpec keySpec = new SecretKeySpec(secretKey.getBytes(StandardCharsets.UTF_8), ALGORITHM);
 
             Cipher cipher = Cipher.getInstance(ALGORITHM);
 
@@ -35,13 +40,13 @@ public class AesCryptoUtil {
 
     }
 
-    public static String decrypt(String cipherText) {
+    public  String decrypt(String cipherText) {
 
         if (cipherText == null) return null;
 
         try {
 
-            SecretKeySpec keySpec = new SecretKeySpec(SECRET_KEY.getBytes(StandardCharsets.UTF_8), ALGORITHM);
+            SecretKeySpec keySpec = new SecretKeySpec(secretKey.getBytes(StandardCharsets.UTF_8), ALGORITHM);
 
             Cipher cipher = Cipher.getInstance(ALGORITHM);
 
