@@ -16,4 +16,5 @@ public interface NotificationMapper {
 
     Notification map(NotificationCreatedDTO notificationCreatedDTO);
 
+
 }

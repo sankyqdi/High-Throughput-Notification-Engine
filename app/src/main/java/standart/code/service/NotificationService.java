@@ -1,14 +1,19 @@
 package standart.code.service;
 
+import jakarta.persistence.EntityNotFoundException;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import standart.code.dto.*;
 import standart.code.error.QueueOverflow;
 import standart.code.mapper.NotificationMapper;
 import standart.code.model.Notification;
+import standart.code.model.SenderAccount;
+import standart.code.model.User;
 import standart.code.repository.NotificationRepository;
+import standart.code.repository.SenderAccountRepository;
 import util.EmailHasher;
 
 import java.util.List;
@@ -23,9 +28,16 @@ public class NotificationService implements NotificationServiceInterface{
 
     private final NotificationMapper notificationMapper;
 
-    private final EngineStatsService engineStatsService;
+    private final SenderAccountRepository senderAccountRepository;
 
-    public EngineStatsDTO dataAcquisition(NotificationRequest notificationRequest) {
+
+    @Transactional
+    @Override
+    public EngineStatsDTO dataAcquisition(NotificationRequest notificationRequest, User user) {
+
+        SenderAccount senderAccount = senderAccountRepository.findByIdAndOwner(notificationRequest.getSenderAccountId(), user)
+                .orElseThrow(() -> new EntityNotFoundException(
+                        "Аккаунт отправителя с ID " + notificationRequest.getSenderAccountId() + " не найден"));
 
         int count = 0;
 
@@ -34,7 +46,7 @@ public class NotificationService implements NotificationServiceInterface{
             String hashedEmail = EmailHasher.hashEmailSha256(email);
 
             NotificationCreatedDTO notificationCreatedDTO = NotificationCreatedDTO.builder()
-                    .senderAccount(notificationRequest.getSender())
+                    .senderAccount(senderAccount)
                     .email(hashedEmail)
                     .message(notificationRequest.getMessage())
                     .build();
@@ -42,7 +54,7 @@ public class NotificationService implements NotificationServiceInterface{
             create(notificationCreatedDTO);
 
             TaskDTO taskDTO = TaskDTO.builder()
-                    .senderAccount(notificationRequest.getSender())
+                    .senderAccount(senderAccount)
                     .email(email)
                     .name("message" + (count + 1))
                     .body(notificationRequest.getMessage())
