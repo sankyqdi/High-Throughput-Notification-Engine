@@ -9,6 +9,7 @@ import standart.code.dto.RegisterSenderRequest;
 import standart.code.dto.SenderAccountResponseDTO;
 import standart.code.mapper.SenderAccountMapper;
 import standart.code.model.SenderAccount;
+import standart.code.model.User;
 import standart.code.repository.SenderAccountRepository;
 import util.AesCryptoUtil;
 
@@ -25,11 +26,11 @@ public class SenderAccountService implements SenderAccountServiceInterface {
     private final SenderAccountRepository senderAccountRepository;
 
     @Override
-    public SenderAccountResponseDTO registerAccount(RegisterSenderRequest request) {
-
+    public SenderAccountResponseDTO registerAccount(RegisterSenderRequest request, User user) {
         String encryptedPassword = AesCryptoUtil.encrypt(request.getAppPassword());
 
         SenderAccount senderAccount = mapper.map(request, encryptedPassword);
+        senderAccount.setOwner(user);
 
         SenderAccount savedAccount = senderAccountRepository.save(senderAccount);
 
@@ -38,9 +39,9 @@ public class SenderAccountService implements SenderAccountServiceInterface {
     }
 
     @Override
-    public SenderAccountResponseDTO getById(Long id) {
+    public SenderAccountResponseDTO getById(Long id, User owner) {
 
-        SenderAccount senderAccount = senderAccountRepository.findById(id)
+        SenderAccount senderAccount = senderAccountRepository.findByIdAndOwner(id, owner)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
 
         return mapper.map(senderAccount);
@@ -48,18 +49,18 @@ public class SenderAccountService implements SenderAccountServiceInterface {
     }
 
     @Override
-    public List<SenderAccountResponseDTO> getAll() {
+    public List<SenderAccountResponseDTO> getAll(User owner) {
 
-        return senderAccountRepository.findAll().stream()
+        return senderAccountRepository.findAllByOwner(owner).stream()
                 .map(mapper::map)
                 .toList();
 
     }
 
     @Override
-    public void deleteById(Long id) {
+    public void deleteById(Long id, User owner) {
 
-         SenderAccount senderAccount = senderAccountRepository.findById(id)
+         SenderAccount senderAccount = senderAccountRepository.findByIdAndOwner(id, owner)
                  .orElseThrow(() -> new EntityNotFoundException("Аккаунт с ID " + id + " не найден"));
 
          senderAccountRepository.delete(senderAccount);
