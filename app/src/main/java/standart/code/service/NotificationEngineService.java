@@ -4,10 +4,17 @@ import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import standart.code.dto.EngineStatsDTO;
 import standart.code.dto.TaskDTO;
 import standart.code.error.ServerError;
 
+import java.time.OffsetDateTime;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Deque;
+import java.util.List;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -19,18 +26,18 @@ public class NotificationEngineService {
     private final YandexEmailService emailService;
 
     private final AtomicLong processCount = new AtomicLong(0);
-
-    private final BlockingQueue<TaskDTO> taskQueue = new ArrayBlockingQueue<>(5000);
-
-    private ExecutorService workerPool;
-
-    private final int threadCount = 10;
-
-    private final Integer queueCapacity = 5000;
-
     private final AtomicLong errorsCount = new AtomicLong(0);
 
+    private final BlockingQueue<TaskDTO> taskQueue = new ArrayBlockingQueue<>(5000);
+    private final Integer queueCapacity = 5000;
+    private final int threadCount = 10;
+
+    private ExecutorService workerPool;
     private volatile boolean isShutdown = false;
+
+    private static final int MAX_HISTORY_SIZE = 60;
+    private final Deque<EngineStatsDTO> metricHistory = new ArrayDeque<>(MAX_HISTORY_SIZE);
+    private long lastCapturedProcessCount = 0;
 
     public boolean addTaskInPull(TaskDTO task) {
 
@@ -55,6 +62,38 @@ public class NotificationEngineService {
 
         }
 
+
+    }
+
+    @Scheduled(fixedRate = 5000)
+    public synchronized void captureMetricsSnapshot() {
+
+        long currentProcessed = processCount.get();
+        long diff = currentProcessed - lastCapturedProcessCount;
+        lastCapturedProcessCount = currentProcessed;
+
+        EngineStatsDTO snapshot = EngineStatsDTO.builder()
+                .errorsCount(errorsCount.get())
+                .processCount(processCount.get())
+                .queueCapacity(queueCapacity)
+                .currentQueueSize(taskQueue.size())
+                .throughput(diff)
+                .dateTime(OffsetDateTime.now())
+                .build();
+
+        if (metricHistory.size() >= MAX_HISTORY_SIZE) {
+
+            metricHistory.pollFirst();
+
+        }
+
+        metricHistory.addLast(snapshot);
+
+    }
+
+    public synchronized List<EngineStatsDTO> getMetricsHistory() {
+
+        return new ArrayList<>(metricHistory);
 
     }
 
@@ -120,6 +159,7 @@ public class NotificationEngineService {
 
         } catch (Exception e) {
 
+            errorsCount.incrementAndGet();
             log.error("Сообщение {} не отправлено. {}", taskDTO.getName(), e.getMessage());
 
         }
