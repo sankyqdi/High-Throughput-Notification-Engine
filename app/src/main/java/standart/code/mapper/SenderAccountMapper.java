@@ -7,7 +7,7 @@ import standart.code.dto.RegisterSenderRequest;
 import standart.code.dto.SenderAccountResponseDTO;
 import standart.code.model.SenderAccount;
 
-@Mapper(componentModel = "string",
+@Mapper(componentModel = "spring",
  unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface SenderAccountMapper {
 

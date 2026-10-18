@@ -15,7 +15,7 @@ public interface UserMapper {
     @Mapping(target = "username", source = "request.email")
     @Mapping(target = "password", source = "passwordHash")
     @Mapping(target = "role", constant = "ROLE_USER")
-    @Mapping(target = "enabled", constant = "true")
+    @Mapping(target = "isEnabled", constant = "true")
     @Mapping(target = "locked", constant = "false")
     User map (RegisterUserRequest request, String passwordHash);
 
