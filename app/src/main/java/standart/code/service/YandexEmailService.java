@@ -21,55 +21,39 @@ public class YandexEmailService {
     private final MailConfig mailConfig;
     private final Map<String, JavaMailSender> senderCache = new ConcurrentHashMap<>();
 
-    public void sendEmail(String senderEmail, String body, SenderAccount senderAccount) {
+    public void sendEmail(String recipientEmail, String subject, String body, SenderAccount senderAccount) {
 
         try {
             JavaMailSender mailSender = senderCache.computeIfAbsent(senderAccount.getEmail(), username -> {
-
                 String rawPassword = aesCryptoUtil.decrypt(senderAccount.getEncryptedPassword());
                 return mailConfig.createMail(username, rawPassword);
-
-
             });
 
             SimpleMailMessage message = new SimpleMailMessage();
             message.setFrom(senderAccount.getEmail());
-            message.setTo(senderEmail);
-            message.setSubject("Новое уведомление");
+            message.setTo(recipientEmail);
+
+            message.setSubject(subject != null && !subject.trim().isEmpty() ? subject : "Новое уведомление");
             message.setText(body);
 
             mailSender.send(message);
 
-            log.info("Сообщение успешно отправлено на {}", senderEmail);
+            log.info("Сообщение успешно отправлено на {}", recipientEmail);
 
-        }catch (Exception e) {
-
-            log.error("Ошибка при отправки письма {}: {}", senderEmail, e.getMessage());
+        } catch (Exception e) {
+            log.error("Ошибка при отправке письма на {}: {}", recipientEmail, e.getMessage());
             throw e;
-
         }
-
     }
 
     public void clearCacheForUser(String email) {
-
         if(email != null) {
-
             JavaMailSender removeSender = senderCache.remove(email);
-
             if (removeSender != null) {
-
                 log.info("Кеш JavaMailSender успешно очищен для email: {}", email);
-
             } else {
-
                 log.debug("Кеш для email: {} отсутствует в памяти", email);
-
             }
-
         }
-
-
-
     }
 }

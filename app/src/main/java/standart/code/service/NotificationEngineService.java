@@ -150,7 +150,8 @@ public class NotificationEngineService {
     private void processing(TaskDTO taskDTO) {
 
         try {
-            emailService.sendEmail(taskDTO.getEmail(), taskDTO.getBody(), taskDTO.getSenderAccount());
+
+            emailService.sendEmail(taskDTO.getEmail(), taskDTO.getSubject(), taskDTO.getBody(), taskDTO.getSenderAccount());
 
             processCount.incrementAndGet();
 

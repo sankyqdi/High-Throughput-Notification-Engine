@@ -25,6 +25,9 @@ public class Notification {
     @Column(name = "email")
     private String email;
 
+    @Column(name = "subject")
+    private String subject;
+
     @Column(name = "message", length = 1000)
     private String message;
 

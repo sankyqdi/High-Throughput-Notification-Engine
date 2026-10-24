@@ -57,6 +57,7 @@ public class NotificationService implements NotificationServiceInterface{
                     .senderAccount(senderAccount)
                     .email(email)
                     .name("message" + (count + 1))
+                    .subject(notificationRequest.getSubject())
                     .body(notificationRequest.getMessage())
                     .build();
 

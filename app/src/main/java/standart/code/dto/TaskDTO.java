@@ -10,12 +10,13 @@ import standart.code.model.SenderAccount;
 @Builder
 public class TaskDTO {
 
-//    private Long id;
     private SenderAccount senderAccount;
 
     private String email;
 
     private String name;
+
+    private String subject;
 
     private String body;
 
