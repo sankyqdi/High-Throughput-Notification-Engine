@@ -1,37 +1,150 @@
-# Notification Engine Service 🚀
+# High-Throughput Notification Engine
 
-High-performance, scalable, asynchronous email notification engine. Built with **Java** and **Spring Boot**, this service features a custom multi-threaded processing pipeline (Producer-Consumer pattern via `ExecutorService` & `ArrayBlockingQueue`) paired with dynamic multi-account SMTP dispatch (Yandex/Gmail).
+## Структура проекта
 
-It completely decouples database persistence from mail transport, preventing external SMTP latency from blocking HTTP requests.
+```text
+app/
+├── build.gradle.kts
+└── src/
+    ├── main/
+    │   ├── java/
+    │   │   ├── standart/code/
+    │   │   │   ├── Main.java
+    │   │   │   ├── config/       # Настройка SMTP
+    │   │   │   ├── constant/     # Константы API-маршрутов
+    │   │   │   ├── controller/   # HTTP-контроллеры
+    │   │   │   ├── dto/          # Запросы, ответы и задачи очереди
+    │   │   │   ├── error/        # Ошибки приложения
+    │   │   │   ├── mapper/       # Преобразование DTO и моделей
+    │   │   │   ├── model/        # Сущности и модель отправителя
+    │   │   │   ├── repository/   # Доступ к данным через Spring Data JPA
+    │   │   │   └── service/      # Бизнес-логика и отправка уведомлений
+    │   │   └── util/             # Хеширование email и шифрование паролей
+    │   └── resources/
+    └── test/
+        └── java/
+```
 
----
+## Архитектура
 
-## 🛠 Tech Stack
+Приложение построено на Spring Boot. Контроллеры принимают HTTP-запросы и передают работу сервисам. Сервисы координируют бизнес-логику, мапперы преобразуют DTO и модели, а репозитории обеспечивают сохранение сущностей.
 
-- **Core & Runtime:** Java, Spring Boot
-- **Database & Persistence:** Spring Data JPA, PostgreSQL, Liquibase
-- **Concurrency & Async Pipeline:** Custom Worker Pool (`ExecutorService`), Bounded Queue (`ArrayBlockingQueue`), Thread Safety (`AtomicLong`, `ConcurrentHashMap`)
-- **Mail Transport:** Spring Boot Starter Mail (`JavaMailSender`), Dynamic Multi-Account SMTP Configuration
-- **Data Protection & Mapping:** SHA-256 Email Hashing (`EmailHasher`), MapStruct, Lombok
-- **Logging & Monitoring:** Logback Classic, Real-time Engine Metrics (`EngineStatsDTO`)
-- **Testing:** JUnit 5, Awaitility
-- **Build System:** Gradle (Kotlin DSL)
+### Основной поток уведомления
 
----
+1. `NotificationController` принимает `NotificationRequest` и вызывает `NotificationService`.
+2. `NotificationService` хеширует email для записи в историю и сохраняет уведомление через `NotificationRepository`.
+3. Для отправки создаётся `TaskDTO` с исходным email, текстом сообщения и данными `User`; задача добавляется в ограниченную очередь `NotificationEngineService` ёмкостью 5000 задач.
+4. Пул из 10 потоков забирает задачи из очереди и передаёт их в `YandexEmailService`.
+5. `YandexEmailService` создаёт и кэширует `JavaMailSender` по аккаунту, получает пароль через `AesCryptoUtil` и использует SMTP-настройки `MailConfig`.
+6. `NotificationService` возвращает показатели очереди и обработки. `NotificationController` также предоставляет текущие показатели работы движка.
 
-1. **Batch Ingestion & Decoupling:** `NotificationService` accepts bulk notification requests, normalizes sensitive data by hashing email addresses via `EmailHasher` (SHA-256) for compliant database storage, and persists the notification[cite: 7].
-2. **Task Enqueueing:** Unhashed dispatch tasks (`TaskDTO`) are offered to `NotificationEngineService`'s bounded `ArrayBlockingQueue`[cite: 7, 8].
-3. **Multi-Threaded Consumer Pool:** A managed pool of worker threads continuously dequeues tasks without blocking client HTTP threads[cite: 8].
-4. **Dynamic Multi-Account SMTP Delivery:** `YandexEmailService` dynamically instantiates and caches (`ConcurrentHashMap`) `JavaMailSender` instances for distinct user accounts, executing secure SMTP deliveries[cite: 6, 9].
-5. **Real-time Observability:** Every batch operation returns an `EngineStatsDTO` snapshot containing live engine health metrics (processed count, total errors, queue capacity, and current queue utilization)[cite: 8].
+```mermaid
+flowchart LR
+    Client[HTTP-клиент] --> NC[NotificationController]
+    NC --> NS[NotificationService]
+    NS -->|хеширует email| EH[EmailHasher]
+    NS -->|DTO -> модель| NM[NotificationMapper]
+    NM --> NR[NotificationRepository]
+    NR --> N[(Notification)]
+    NS -->|TaskDTO с исходным email| NE[NotificationEngineService]
+    NE --> Q[(Ограниченная очередь)]
+    Q --> W[Пул из 10 рабочих потоков]
+    W -->|отправка задачи| YE[YandexEmailService]
+    YE -->|SMTP sender| MC[MailConfig]
+    YE -->|расшифровка пароля| AES[AesCryptoUtil]
+    MC --> SMTP[SMTP-сервер Яндекса]
+    YE --> SMTP
+    NE -->|счётчики и размер очереди| NS
+    NE -->|текущие показатели| NC
+```
 
----
+### Связи основных классов
 
-## 🚀 Key Features
+Стрелки показывают использование или преобразование данных. Это логические зависимости приложения, а не обязательно связи между таблицами базы данных.
 
-- **Decoupled Persistence & Dispatch:** Database logging uses hashed PII while the in-memory engine handles raw email addresses for delivery[cite: 7, 8].
-- **Dynamic Multi-Account SMTP:** Supports sending emails from multiple different Yandex/Gmail credentials on the fly with built-in sender instance caching[cite: 6, 9].
-- **Backpressure Protection:** Uses a bounded `ArrayBlockingQueue` (5000 tasks max) to smooth out traffic spikes and protect memory usage[cite: 8].
-- **Graceful Lifecycle Management:** Integrated with Spring's `@PostConstruct` and `@PreDestroy` for clean worker pool startup and graceful shutdown termination[cite: 8].
-- **Instant Health Telemetry:** Provides immediate stats on queue load, throughput, and
+```mermaid
+flowchart TB
+    Main[Main] --> Spring[Spring Boot]
 
+    subgraph API[HTTP-слой]
+        NC[NotificationController]
+        SAC[SenderAccountController]
+    end
+
+    subgraph Services[Сервисный слой]
+        NS[NotificationService]
+        SAS[SenderAccountService]
+        NES[NotificationEngineService]
+        ESS[EngineStatsService]
+        YES[YandexEmailService]
+    end
+
+    subgraph Data[Слой данных]
+        NR[NotificationRepository]
+        SAR[SenderAccountRepository]
+        ESR[EngineStatsRepository]
+        N[Notification]
+        SA[SenderAccount]
+        ES[EngineStats]
+    end
+
+    subgraph Conversion[DTO и преобразования]
+        NDTO[NotificationRequest / NotificationDTO / NotificationCreatedDTO]
+        TDTO[TaskDTO]
+        SDTO[RegisterSenderRequest / SenderAccountResponseDTO]
+        EDTO[EngineStatsRequest / EngineStatsDTO]
+        NM[NotificationMapper]
+        SAM[SenderAccountMapper]
+        ESM[EngineStatsMapper]
+    end
+
+    NC --> NS
+    NC --> NES
+    NS --> NES
+    NS --> NR
+    NS --> NM
+    NS --> NDTO
+    NS --> TDTO
+    NS -. внедрён, сейчас не используется .-> ESS
+    NR --> N
+    NM --> N
+    NM --> NDTO
+
+    SAC --> SAS
+    SAS --> SAR
+    SAS --> SAM
+    SAS --> YES
+    SAR --> SA
+    SAM --> SA
+    SAM --> SDTO
+
+    NES --> TDTO
+    NES --> YES
+    YES --> MailConfig[MailConfig]
+    YES --> User[User]
+    YES --> AES[AesCryptoUtil]
+
+    ESS --> ESR
+    ESS --> ESM
+    ESR --> ES
+    ESM --> ES
+    ESM --> EDTO
+
+    NS --> EmailHasher[EmailHasher]
+```
+
+### Роли компонентов
+
+| Компонент | Назначение |
+|---|---|
+| `NotificationController` | Приём уведомлений и выдача текущей статистики движка. |
+| `NotificationService` | Сохранение уведомлений, хеширование адресов для истории, постановка задач в очередь. |
+| `NotificationEngineService` | Ограниченная очередь, пул обработчиков и счётчики успешно обработанных задач и ошибок очереди. |
+| `YandexEmailService` | Формирование письма, кэширование отправителей и отправка через SMTP. |
+| `SenderAccountController`, `SenderAccountService` | Регистрация и управление сохранёнными аккаунтами отправителей. |
+| `EngineStatsService` | Создание, чтение и удаление сохранённых записей статистики. |
+| `*Repository` | CRUD-доступ к соответствующим JPA-моделям. |
+| `*Mapper` | Преобразование между DTO и моделями. |
+| `EmailHasher`, `AesCryptoUtil` | SHA-256-хеширование email для истории и шифрование/расшифровка пароля аккаунта. |
+
+`SenderAccount` — отдельная сохраняемая модель аккаунта отправителя. В текущем потоке постановки уведомлений данные отправителя для письма поступают из `User` внутри запроса и `TaskDTO`; `SenderAccountService` отдельно управляет зарегистрированными аккаунтами. `EngineStatsService` также является отдельным сервисом хранения статистики, тогда как live-статистика в контроллере читается из счётчиков `NotificationEngineService`.

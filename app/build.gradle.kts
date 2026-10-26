@@ -21,6 +21,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-mail")
     implementation("org.springframework.boot:spring-boot-starter-security")
     implementation("io.jsonwebtoken:jjwt-api:0.12.6")
+    implementation("com.h2database:h2")
 
     annotationProcessor("org.projectlombok:lombok:1.18.36")
     annotationProcessor("org.projectlombok:lombok-mapstruct-binding:0.2.0")
@@ -38,7 +39,6 @@ dependencies {
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.awaitility:awaitility:4.2.2")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
-    testRuntimeOnly("com.h2database:h2")
 }
 
 tasks.test {
