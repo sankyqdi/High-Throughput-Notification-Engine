@@ -8,18 +8,21 @@ RUN npm ci
 COPY frontend/ ./
 RUN npm run build
 
+
 FROM eclipse-temurin:21-jdk-alpine AS backend-builder
 WORKDIR /workspace
 
-COPY gradlew settings.gradle.kts* build.gradle.kts* ./
-COPY gradle gradle
-COPY app/build.gradle.kts app/
-COPY app/src app/src
 
-COPY --from=frontend-builder /workspace/frontend/dist app/src/main/resources/static/
+COPY app/gradlew ./
+COPY app/gradle ./gradle
+COPY app/build.gradle.kts app/settings.gradle.kts* ./
+
+COPY app/src ./src
+
+COPY --from=frontend-builder /workspace/frontend/dist ./src/main/resources/static/
 
 RUN chmod +x ./gradlew
-RUN ./gradlew :app:clean :app:bootJar -x test --no-daemon
+RUN ./gradlew clean bootJar -x test --no-daemon
 
 FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
@@ -29,7 +32,7 @@ RUN addgroup -S appgroup && adduser -S appuser -G appgroup && \
 
 USER appuser
 
-COPY --from=backend-builder /workspace/app/build/libs/*.jar app.jar
+COPY --from=backend-builder /workspace/build/libs/*.jar app.jar
 
 EXPOSE 8080
 
