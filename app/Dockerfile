@@ -9,9 +9,9 @@ COPY build.gradle.kts settings.gradle.kts* ./
 
 RUN chmod +x ./gradlew
 
-COPY app/src app/src
+COPY src src
 
-RUN ./gradlew :app:clean :app:bootJar -x test --no-daemon
+RUN ./gradlew clean bootJar -x test --no-daemon
 
 FROM eclipse-temurin:21-jre-alpine
 
@@ -20,7 +20,7 @@ WORKDIR /app
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 USER appuser
 
-COPY --from=builder /workspace/app/build/libs/*.jar app.jar
+COPY --from=builder /workspace/build/libs/*.jar app.jar
 
 EXPOSE 8080
 
