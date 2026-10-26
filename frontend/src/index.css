@@ -1,0 +1,495 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,400&family=Inter:wght@300;400;500;600;700&display=swap');
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+body, html {
+  margin: 0;
+  padding: 0;
+  background-color: #0a0713;
+  color: #f2eeff;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  overflow-x: hidden;
+  zoom: 0.9;
+}
+
+/* ==========================================================================
+   ГЛАВНЫЙ КОНТЕЙНЕР
+   ========================================================================== */
+.vb-k7d {
+  --bg: #0a0713;
+  --line: rgba(167, 139, 250, 0.18);
+  --accent: #7c5cff;
+  --accent-2: #a855f7;
+  --text: #f2eeff;
+  --muted: #b6a9db;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--text);
+  overflow-x: hidden;
+}
+
+/* ==========================================================================
+   ВЕРХНЯЯ ШАПКА (HEADER / NAV)
+   ========================================================================== */
+.vb-k7d-nav {
+  position: relative;
+  z-index: 10;
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  width: 100%;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 20px clamp(16px, 4vw, 56px);
+  gap: 20px;
+}
+
+.vb-k7d-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: #fff;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.vb-k7d-logo__mark {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(140deg, var(--accent), var(--accent-2));
+  box-shadow: 0 6px 18px rgba(124, 92, 255, 0.4);
+}
+
+.vb-k7d-menu {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: 8px;
+  margin-left: auto;
+  margin-right: 12px;
+}
+
+.vb-k7d-pill {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px;
+  padding: 10px 18px;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #c3b7e8;
+  text-decoration: none;
+  white-space: nowrap;
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.vb-k7d-pill:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+}
+
+.vb-k7d-pill--active {
+  background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%) !important;
+  color: #fff !important;
+  box-shadow: 0 8px 22px rgba(124, 92, 255, 0.38);
+}
+
+.vb-k7d-navactions {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px;
+}
+
+/* ==========================================================================
+   КНОПКИ
+   ========================================================================== */
+.t-btnflex {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 13px;
+  text-decoration: none;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.25s cubic-bezier(0.2, 0.7, 0.3, 1);
+}
+
+.t-btnflex_sm {
+  padding: 9px 18px;
+  font-size: 13.5px;
+}
+
+.t-btnflex_md {
+  padding: 14px 28px;
+  font-size: 15px;
+}
+
+.vb-k7d-btn--primary {
+  background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%) !important;
+  color: #fff !important;
+  box-shadow: 0 10px 26px rgba(124, 92, 255, 0.36);
+}
+
+.vb-k7d-btn--primary:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.08);
+  box-shadow: 0 16px 34px rgba(124, 92, 255, 0.45);
+}
+
+.vb-k7d-btn--ghost {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(167, 139, 250, 0.3) !important;
+  color: #e8e1ff !important;
+}
+
+.vb-k7d-btn--ghost:hover {
+  background: rgba(167, 139, 250, 0.14) !important;
+  border-color: rgba(167, 139, 250, 0.55) !important;
+  transform: translateY(-2px);
+}
+
+/* ==========================================================================
+   ПОЛНОЭКРАННЫЙ ФОНОВЫЙ АРТ С ФИОЛЕТОВЫМ ПРИГЛУШЕНИЕМ
+   ========================================================================== */
+.vb-k7d-full-art {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.vb-k7d-full-art__img {
+  position: absolute;
+  inset: 0;
+  background-image: url('/hero-art-top.png');
+  background-size: cover;
+  background-position: center 20%;
+  background-repeat: no-repeat;
+  filter: grayscale(1) contrast(1.1) brightness(0.65);
+}
+
+.vb-k7d-full-art__tint {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(145deg, rgba(124, 92, 255, 0.42) 0%, rgba(55, 22, 115, 0.35) 45%, rgba(10, 7, 19, 0.88) 100%);
+  mix-blend-mode: color-burn;
+}
+
+.vb-k7d-full-art__fade {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 65% 60% at 50% 50%, rgba(10, 7, 19, 0.92) 0%, rgba(10, 7, 19, 0.55) 60%, rgba(10, 7, 19, 0.2) 100%),
+    linear-gradient(180deg, rgba(10, 7, 19, 0.85) 0%, rgba(10, 7, 19, 0) 25%, rgba(10, 7, 19, 0) 75%, var(--bg) 100%);
+}
+
+/* ==========================================================================
+   СЕТКА ГЛАВНОГО ЭКРАНА (HERO)
+   ========================================================================== */
+.vb-k7d-inner {
+  position: relative;
+  z-index: 2;
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: clamp(24px, 4vh, 56px) clamp(16px, 4vw, 56px) clamp(44px, 7vh, 84px);
+}
+
+.vb-k7d-copy {
+  max-width: 740px;
+  text-align: center;
+  margin: 0 auto;
+}
+
+.vb-k7d-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  margin: 0 auto 24px;
+  padding: 9px 16px;
+  border: 1px solid rgba(167, 139, 250, 0.34);
+  border-radius: 999px;
+  background: rgba(124, 92, 255, 0.1);
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #d9cfff;
+}
+
+.vb-k7d-badge__dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #6ee7a8;
+  box-shadow: 0 0 9px rgba(110, 231, 168, 0.85);
+}
+
+.vb-k7d-title {
+  margin: 0;
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: clamp(2.4rem, 4.4vw, 4.2rem);
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  font-weight: 700;
+  color: #fff;
+}
+
+.vb-k7d-title__soft {
+  color: #b79dff;
+}
+
+.vb-k7d-lead {
+  margin: 18px auto 0;
+  max-width: 580px;
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--muted);
+}
+
+.vb-k7d-actions {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 32px;
+}
+
+.vb-k7d-stats {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin: 40px auto 0;
+  padding: 0;
+  max-width: 680px;
+  width: 100%;
+}
+
+.vb-k7d-stat {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 14px;
+  min-height: 96px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: rgba(18, 12, 34, 0.72);
+  backdrop-filter: blur(6px);
+  text-align: left;
+  transition: all 0.25s ease;
+}
+
+.vb-k7d-stat:hover {
+  border-color: rgba(167, 139, 250, 0.45);
+  transform: translateY(-3px);
+  background: rgba(26, 17, 50, 0.82);
+}
+
+.vb-k7d-stat__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12.5px;
+  color: #9d90c4;
+}
+
+.vb-k7d-stat__val {
+  font-size: 18px;
+  font-weight: 600;
+  color: #fff;
+}
+
+/* ==========================================================================
+   СЕКЦИЯ ВОЗМОЖНОСТЕЙ (VB-M3Q)
+   ========================================================================== */
+.vb-m3q {
+  --line: rgba(167,139,250,.16);
+  --card: #120c22;
+  position: relative;
+  background: #0b0716;
+  color: #f2eeff;
+  padding: clamp(56px, 9vh, 104px) clamp(16px, 4vw, 56px);
+}
+.vb-m3q__wrap { max-width: 1440px; margin: 0 auto; }
+.vb-m3q__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: clamp(16px, 3vw, 48px);
+  margin-bottom: clamp(30px, 5vh, 52px);
+}
+.vb-m3q__title {
+  margin: 0;
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: clamp(1.7rem, 3vw, 2.7rem);
+  line-height: 1.1;
+  font-weight: 700;
+  color: #fff;
+}
+.vb-m3q__subtitle {
+  margin: 0;
+  max-width: 46ch;
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--muted);
+}
+.vb-m3q__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(238px, 1fr));
+  gap: clamp(14px, 1.6vw, 22px);
+}
+.vb-m3q-card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: clamp(20px, 2vw, 28px);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: radial-gradient(120% 90% at 0% 0%, rgba(124,92,255,.12) 0%, rgba(124,92,255,0) 60%), var(--card);
+  transition: transform .3s cubic-bezier(.2,.7,.3,1), border-color .3s ease;
+}
+.vb-m3q-card:hover { transform: translateY(-5px); border-color: rgba(167,139,250,.42); }
+.vb-m3q-card__icon {
+  width: 46px; height: 46px;
+  display: grid; place-items: center;
+  border: 1px solid rgba(167,139,250,.3);
+  border-radius: 14px;
+  background: rgba(124,92,255,.14);
+  color: #b79dff;
+}
+.vb-m3q-card__title {
+  margin: 4px 0 0;
+  font-size: clamp(17px, 1.5vw, 20px);
+  font-weight: 650;
+  color: #fff;
+}
+.vb-m3q-card__text {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.62;
+  color: var(--muted);
+}
+.vb-m3q-card__meta {
+  margin-top: auto;
+  padding-top: 16px;
+  border-top: 1px solid rgba(167,139,250,.14);
+  display: flex; align-items: center; justify-content: space-between;
+  font-size: 13px; color: #9d90c4;
+}
+.vb-m3q-card__meta strong { color: #c9b8ff; font-weight: 600; }
+
+/* ==========================================================================
+   ПОДВАЛ (VB-W2N)
+   ========================================================================== */
+.vb-w2n {
+  background: #080511;
+  color: #b6a9db;
+  padding: clamp(44px, 7vh, 72px) clamp(16px, 4vw, 56px) clamp(28px, 4vh, 40px);
+  border-top: 1px solid rgba(167,139,250,.14);
+}
+.vb-w2n__wrap { max-width: 1440px; margin: 0 auto; }
+.vb-w2n__top {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) repeat(3, minmax(0, 1fr));
+  gap: clamp(24px, 3vw, 48px);
+  padding-bottom: clamp(28px, 4vh, 44px);
+  border-bottom: 1px solid rgba(167,139,250,.14);
+}
+.vb-w2n__logo {
+  display: inline-flex; align-items: center; gap: 10px;
+  font-size: 19px; font-weight: 700; color: #fff; text-decoration: none;
+}
+.vb-w2n__mark {
+  width: 30px; height: 30px; border-radius: 9px;
+  display: grid; place-items: center;
+  background: linear-gradient(140deg, #7c5cff, #a855f7);
+}
+.vb-w2n__tag { margin: 14px 0 0; max-width: 34ch; font-size: 14.6px; line-height: 1.6; color: #9d90c4; }
+.vb-w2n__coltitle {
+  margin: 0 0 14px;
+  font-size: 14px; font-weight: 650; letter-spacing: .06em; text-transform: uppercase; color: #c9b8ff;
+}
+.vb-w2n__links { list-style: none; margin: 0; padding: 0; display: grid; gap: 11px; }
+.vb-w2n__links a { font-size: 14.8px; color: #b6a9db; text-decoration: none; transition: color .22s ease; }
+.vb-w2n__links a:hover { color: #fff; }
+.vb-w2n__bottom {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 14px;
+  padding-top: clamp(20px, 3vh, 30px); font-size: 13.6px; color: #8f83b6;
+}
+.vb-w2n__status { display: inline-flex; align-items: center; gap: 8px; color: #9ce9c0; }
+.vb-w2n__status i { width: 7px; height: 7px; border-radius: 50%; background: #6ee7a8; box-shadow: 0 0 9px rgba(110,231,168,.85); display: block; }
+
+/* ==========================================================================
+   ПОЛЯ ВВОДА И ФОРМЫ (VB-R5T)
+   ========================================================================== */
+.vb-r5t-group {
+  display: grid;
+  gap: 6px;
+}
+
+.vb-r5t-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #d3c7ff;
+}
+
+.vb-r5t-input {
+  width: 100%;
+  padding: 13px 16px;
+  border: 1px solid rgba(199, 181, 255, 0.28);
+  border-radius: 13px;
+  background: rgba(255, 255, 255, 0.05);
+  color: #fff;
+  font-size: 14.5px;
+  outline: none;
+  transition: all 0.22s ease;
+}
+
+.vb-r5t-input:focus {
+  border-color: rgba(199, 181, 255, 0.8);
+  background: rgba(255, 255, 255, 0.09);
+  box-shadow: 0 0 0 4px rgba(167, 139, 250, 0.24);
+}
+
+.t-submit {
+  width: 100%;
+  border: none;
+  border-radius: 13px;
+  background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+  color: #fff;
+  font-weight: 600;
+  box-shadow: 0 10px 24px rgba(124, 92, 255, 0.36);
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.t-submit:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.08);
+}
