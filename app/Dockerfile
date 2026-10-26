@@ -1,27 +1,35 @@
 
-FROM eclipse-temurin:21-jdk-alpine AS builder
+FROM node:20-alpine AS frontend-builder
+WORKDIR /workspace/frontend
 
+COPY frontend/package*.json ./
+RUN npm ci
+
+COPY frontend/ ./
+RUN npm run build
+
+FROM eclipse-temurin:21-jdk-alpine AS backend-builder
 WORKDIR /workspace
 
-COPY gradlew .
+COPY gradlew settings.gradle.kts* build.gradle.kts* ./
 COPY gradle gradle
-COPY build.gradle.kts settings.gradle.kts* ./
+COPY app/build.gradle.kts app/
+COPY app/src app/src
+
+COPY --from=frontend-builder /workspace/frontend/dist app/src/main/resources/static/
 
 RUN chmod +x ./gradlew
-
-COPY src src
-
-RUN ./gradlew clean bootJar -x test --no-daemon
+RUN ./gradlew :app:clean :app:bootJar -x test --no-daemon
 
 FROM eclipse-temurin:21-jre-alpine
-
 WORKDIR /app
 
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup && \
     mkdir -p /app/logs && chown -R appuser:appgroup /app
+
 USER appuser
 
-COPY --from=builder /workspace/build/libs/*.jar app.jar
+COPY --from=backend-builder /workspace/app/build/libs/*.jar app.jar
 
 EXPOSE 8080
 

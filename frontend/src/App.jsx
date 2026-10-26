@@ -50,7 +50,7 @@ const API_REGISTER = `${API_V1}/senders`;
 const USER = `${API_V1}/users`;
 const AUTH = `${API_V1}/auth`;
 
-const DEFAULT_API_URL = 'http://localhost:8080';
+const DEFAULT_API_URL = '';
 const QUEUE_CAPACITY = 5000;
 
 const MESSAGE_TEMPLATES = [
@@ -174,7 +174,7 @@ export default function App() {
       const [statsData, historyData, sendersData] = await Promise.all([
         apiFetch(`${NOTIFICATIONS}/stats`).catch(() => null),
         apiFetch(`${NOTIFICATIONS}/stats/history`).catch(() => null),
-        apiFetch(API_REGISTER).catch(() => null)
+        token ? apiFetch(API_REGISTER).catch(() => null) : Promise.resolve(null)
       ]);
 
       if (statsData) {
