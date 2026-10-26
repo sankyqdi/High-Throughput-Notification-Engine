@@ -41,6 +41,10 @@ public class NotificationService implements NotificationServiceInterface{
 
         int count = 0;
 
+        String validSubject = (notificationRequest.getSubject() != null && notificationRequest.getSubject().trim().isEmpty())
+                ? notificationRequest.getSubject()
+                : "Новое уведомление";
+
         for (var email : notificationRequest.getEmails()) {
 
             String hashedEmail = EmailHasher.hashEmailSha256(email);
@@ -48,6 +52,7 @@ public class NotificationService implements NotificationServiceInterface{
             NotificationCreatedDTO notificationCreatedDTO = NotificationCreatedDTO.builder()
                     .senderAccount(senderAccount)
                     .email(hashedEmail)
+                    .subject(validSubject)
                     .message(notificationRequest.getMessage())
                     .build();
 
@@ -57,7 +62,7 @@ public class NotificationService implements NotificationServiceInterface{
                     .senderAccount(senderAccount)
                     .email(email)
                     .name("message" + (count + 1))
-                    .subject(notificationRequest.getSubject())
+                    .subject(validSubject)
                     .body(notificationRequest.getMessage())
                     .build();
 

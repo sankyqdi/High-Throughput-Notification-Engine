@@ -7,6 +7,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import standart.code.constant.ApiRoutes;
 import standart.code.dto.EngineStatsDTO;
+import standart.code.dto.NotificationDTO;
 import standart.code.dto.NotificationRequest;
 import standart.code.model.User;
 import standart.code.service.NotificationEngineService;
@@ -54,6 +55,13 @@ public class NotificationController {
     public ResponseEntity<List<EngineStatsDTO>> getStatsHistory() {
 
         return ResponseEntity.ok(notificationEngineService.getMetricsHistory());
+
+    }
+
+    @GetMapping("/history")
+    public ResponseEntity<List<NotificationDTO>> getHistorySenderEmail() {
+
+        return ResponseEntity.ok(notificationService.getAll());
 
     }
 

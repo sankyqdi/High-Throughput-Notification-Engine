@@ -33,7 +33,7 @@ public class YandexEmailService {
             message.setFrom(senderAccount.getEmail());
             message.setTo(recipientEmail);
 
-            message.setSubject(subject != null && !subject.trim().isEmpty() ? subject : "Новое уведомление");
+            message.setSubject(subject);
             message.setText(body);
 
             mailSender.send(message);
