@@ -1,184 +1,150 @@
-# ⚡ High-Throughput Notification Engine
+# High-Throughput Notification Engine
 
-<p align="center">
-  <img src="https://img.shields.io/badge/Java-21-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white" alt="Java 21" />
-  <img src="https://img.shields.io/badge/Spring_Boot-3.3.4-6DB33F?style=for-the-badge&logo=springboot&logoColor=white" alt="Spring Boot" />
-  <img src="https://img.shields.io/badge/Spring_Security-JWT-6DB33F?style=for-the-badge&logo=springsecurity&logoColor=white" alt="Spring Security" />
-  <img src="https://img.shields.io/badge/PostgreSQL-16-4169E1?style=for-the-badge&logo=postgresql&logoColor=white" alt="PostgreSQL" />
-  <img src="https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react&logoColor=black" alt="React 19" />
-  <img src="https://img.shields.io/badge/Docker-Multi--stage-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Docker" />
-  <img src="https://img.shields.io/badge/Render-Deployed-46E3B7?style=for-the-badge&logo=render&logoColor=black" alt="Render" />
-</p>
+## Структура проекта
 
-<p align="center">
-  <b>Высоконагруженный асинхронный сервис пакетной отправки email-уведомлений с кастомным пулом воркеров, динамическим SMTP-контуром, шифрованием секретов и встроенной панелью телеметрии.</b>
-</p>
+```text
+app/
+├── build.gradle.kts
+└── src/
+    ├── main/
+    │   ├── java/
+    │   │   ├── standart/code/
+    │   │   │   ├── Main.java
+    │   │   │   ├── config/       # Настройка SMTP
+    │   │   │   ├── constant/     # Константы API-маршрутов
+    │   │   │   ├── controller/   # HTTP-контроллеры
+    │   │   │   ├── dto/          # Запросы, ответы и задачи очереди
+    │   │   │   ├── error/        # Ошибки приложения
+    │   │   │   ├── mapper/       # Преобразование DTO и моделей
+    │   │   │   ├── model/        # Сущности и модель отправителя
+    │   │   │   ├── repository/   # Доступ к данным через Spring Data JPA
+    │   │   │   └── service/      # Бизнес-логика и отправка уведомлений
+    │   │   └── util/             # Хеширование email и шифрование паролей
+    │   └── resources/
+    └── test/
+        └── java/
+```
 
----
+## Архитектура
 
-## 📌 О проекте
+Приложение построено на Spring Boot. Контроллеры принимают HTTP-запросы и передают работу сервисам. Сервисы координируют бизнес-логику, мапперы преобразуют DTO и модели, а репозитории обеспечивают сохранение сущностей.
 
-При классической синхронной отправке писем через SMTP HTTP-потоки приложения блокируются ожиданием сетевого ответа внешнего почтового сервера (латентность 500–2500 мс на запрос). При массовой рассылке это приводит к быстрому исчерпанию пула потоков веб-сервера (Tomcat thread starvation) и деградации API.
+### Основной поток уведомления
 
-**High-Throughput Notification Engine** решает эту проблему за счёт изоляции приёма запросов от их фактической доставки:
-* Входящие запросы валидируются, сохраняются и мгновенно буферизируются в неблокирующей очереди `ArrayBlockingQueue(5000)`.
-* Фиксированный пул из 10 воркеров (`ExecutorService`) параллельно забирает задачи и доставляет их адресатам без задержек для клиента.
-* Пароли почтовых ящиков шифруются на уровне приложения алгоритмом AES, а email-адреса получателей хешируются через SHA-256 перед сохранением в историю.
-* Весь сервис поставляется как единый артефакт (Single-Artifact Deployment), где React SPA встроен в статические ресурсы Spring Boot.
-
----
-
-## 🛠 Технологический стек
-
-* **Бэкенд:** Java 21, Spring Boot 3.3.4 (Spring Web, Spring Data JPA, Spring Security, Spring Mail).
-* **Многопоточность:** Java Concurrency Utilities (`ExecutorService`, `ArrayBlockingQueue`, `ConcurrentHashMap`, `AtomicLong`).
-* **База данных:** PostgreSQL, HikariCP.
-* **Безопасность и криптография:** JWT (jjwt 0.12.6), BCrypt, AES-128 (Cipher), SHA-256 (`MessageDigest`).
-* **Фронтенд:** React 19, Vite, Recharts, Lucide React.
-* **Инфраструктура & Сборка:** Gradle, Docker (Multi-stage build), Cloud Host Render.
-
----
-
-## 🏗 Архитектура системы
+1. `NotificationController` принимает `NotificationRequest` и вызывает `NotificationService`.
+2. `NotificationService` хеширует email для записи в историю и сохраняет уведомление через `NotificationRepository`.
+3. Для отправки создаётся `TaskDTO` с исходным email, текстом сообщения и данными `User`; задача добавляется в ограниченную очередь `NotificationEngineService` ёмкостью 5000 задач.
+4. Пул из 10 потоков забирает задачи из очереди и передаёт их в `YandexEmailService`.
+5. `YandexEmailService` создаёт и кэширует `JavaMailSender` по аккаунту, получает пароль через `AesCryptoUtil` и использует SMTP-настройки `MailConfig`.
+6. `NotificationService` возвращает показатели очереди и обработки. `NotificationController` также предоставляет текущие показатели работы движка.
 
 ```mermaid
-flowchart TD
-    Client([React SPA / HTTP Client]) -->|POST /api/v1/notifications/send| Controller[NotificationController]
-    
-    subgraph Core ["Spring Boot Application"]
-        Controller -->|1. Валидация & Auth| Service[NotificationService]
-        Service -->|2. SHA-256 Hash| Hasher[EmailHasher]
-        Service -->|3. Persist History| DB[(PostgreSQL)]
-        Service -->|4. Non-blocking offer| Queue[ArrayBlockingQueue: 5000 задач]
-        
-        subgraph Workers ["Worker Thread Pool (10 Threads)"]
-            Engine[NotificationEngineService] -->|take task| Queue
-            Engine -->|Async Dispatch| EmailService[YandexEmailService]
-            EmailService -->|AES Decrypt Password| AES[AesCryptoUtil]
-            EmailService -->|Get/Compute Sender| Cache[ConcurrentHashMap Cache]
-            Cache --> MailConfig[MailConfig]
-        end
-        
-        Scheduler["@Scheduled (Every 5s)"] -->|Snapshot Metrics| Telemetry[Metric History Buffer]
+flowchart LR
+    Client[HTTP-клиент] --> NC[NotificationController]
+    NC --> NS[NotificationService]
+    NS -->|хеширует email| EH[EmailHasher]
+    NS -->|DTO -> модель| NM[NotificationMapper]
+    NM --> NR[NotificationRepository]
+    NR --> N[(Notification)]
+    NS -->|TaskDTO с исходным email| NE[NotificationEngineService]
+    NE --> Q[(Ограниченная очередь)]
+    Q --> W[Пул из 10 рабочих потоков]
+    W -->|отправка задачи| YE[YandexEmailService]
+    YE -->|SMTP sender| MC[MailConfig]
+    YE -->|расшифровка пароля| AES[AesCryptoUtil]
+    MC --> SMTP[SMTP-сервер Яндекса]
+    YE --> SMTP
+    NE -->|счётчики и размер очереди| NS
+    NE -->|текущие показатели| NC
+```
+
+### Связи основных классов
+
+Стрелки показывают использование или преобразование данных. Это логические зависимости приложения, а не обязательно связи между таблицами базы данных.
+
+```mermaid
+flowchart TB
+    Main[Main] --> Spring[Spring Boot]
+
+    subgraph API[HTTP-слой]
+        NC[NotificationController]
+        SAC[SenderAccountController]
     end
 
-    EmailService -->|TLS / SSL: 465| SMTP[Yandex SMTP Server]
-    Client -.->|GET /stats/history| Controller
-    Controller -.->|Read Metrics| Telemetry
+    subgraph Services[Сервисный слой]
+        NS[NotificationService]
+        SAS[SenderAccountService]
+        NES[NotificationEngineService]
+        ESS[EngineStatsService]
+        YES[YandexEmailService]
+    end
+
+    subgraph Data[Слой данных]
+        NR[NotificationRepository]
+        SAR[SenderAccountRepository]
+        ESR[EngineStatsRepository]
+        N[Notification]
+        SA[SenderAccount]
+        ES[EngineStats]
+    end
+
+    subgraph Conversion[DTO и преобразования]
+        NDTO[NotificationRequest / NotificationDTO / NotificationCreatedDTO]
+        TDTO[TaskDTO]
+        SDTO[RegisterSenderRequest / SenderAccountResponseDTO]
+        EDTO[EngineStatsRequest / EngineStatsDTO]
+        NM[NotificationMapper]
+        SAM[SenderAccountMapper]
+        ESM[EngineStatsMapper]
+    end
+
+    NC --> NS
+    NC --> NES
+    NS --> NES
+    NS --> NR
+    NS --> NM
+    NS --> NDTO
+    NS --> TDTO
+    NS -. внедрён, сейчас не используется .-> ESS
+    NR --> N
+    NM --> N
+    NM --> NDTO
+
+    SAC --> SAS
+    SAS --> SAR
+    SAS --> SAM
+    SAS --> YES
+    SAR --> SA
+    SAM --> SA
+    SAM --> SDTO
+
+    NES --> TDTO
+    NES --> YES
+    YES --> MailConfig[MailConfig]
+    YES --> User[User]
+    YES --> AES[AesCryptoUtil]
+
+    ESS --> ESR
+    ESS --> ESM
+    ESR --> ES
+    ESM --> ES
+    ESM --> EDTO
+
+    NS --> EmailHasher[EmailHasher]
 ```
 
----
+### Роли компонентов
 
-## 🚀 Ключевые архитектурные решения
+| Компонент | Назначение |
+|---|---|
+| `NotificationController` | Приём уведомлений и выдача текущей статистики движка. |
+| `NotificationService` | Сохранение уведомлений, хеширование адресов для истории, постановка задач в очередь. |
+| `NotificationEngineService` | Ограниченная очередь, пул обработчиков и счётчики успешно обработанных задач и ошибок очереди. |
+| `YandexEmailService` | Формирование письма, кэширование отправителей и отправка через SMTP. |
+| `SenderAccountController`, `SenderAccountService` | Регистрация и управление сохранёнными аккаунтами отправителей. |
+| `EngineStatsService` | Создание, чтение и удаление сохранённых записей статистики. |
+| `*Repository` | CRUD-доступ к соответствующим JPA-моделям. |
+| `*Mapper` | Преобразование между DTO и моделями. |
+| `EmailHasher`, `AesCryptoUtil` | SHA-256-хеширование email для истории и шифрование/расшифровка пароля аккаунта. |
 
-### 1. Неблокирующий конвейер обработки (Producer-Consumer)
-HTTP-контроллер принимает пачку адресатов, валидирует принадлежность ящика текущему пользователю и помещает задачи `TaskDTO` в ограниченную очередь `ArrayBlockingQueue` емкостью 5000 элементов. Пул воркеров работает в непрерывном цикле `processQueueLoop`, перехватывая сбои отдельных отправок без остановки общего потока. При переполнении очереди сервис защищён выбросом `QueueOverflow` с кодом `429 Too Many Requests`.
-
-### 2. Динамический транспорт и потокобезопасный кэш SMTP
-В отличие от стандартного `JavaMailSender`, привязанного к одному аккаунту в `application.yml`, сервис поддерживает отправку с множества зарегистрированных ящиков. Инстансы `JavaMailSender` конструируются динамически и кэшируются в `ConcurrentHashMap`. При удалении аккаунта кэш точечно сбрасывается методом `clearCacheForUser`.
-
-### 3. Двухконтурная защита данных
-* **Персональные данные:** Email-адреса клиентов хешируются (`SHA-256`) перед записью в таблицу истории `notification_table`, исключая утечку клиентской базы при компрометации БД.
-* **Секреты интеграций:** Пароли приложений для почтовых ящиков шифруются симметричным алгоритмом `AES-128` компонентом `AesCryptoUtil` перед сохранением в `sender_account`.
-
-### 4. Метрики реального времени и телеметрия
-Фоновый шедулер `@Scheduled(fixedRate = 5000)` каждые 5 секунд фиксирует срезы производительности (`currentQueueSize`, `processCount`, `errorsCount`, `throughput`) в кольцевой буфер `ArrayDeque` (глубиной 60 снимков). Графики на фронтенде опрашивают открытый эндпоинт `/stats/history` без создания нагрузки на основную БД.
-
----
-
-## 📡 Спецификация REST API
-
-### Аутентификация и пользователи
-| Метод | Эндпоинт | Доступ | Описание |
-| :--- | :--- | :--- | :--- |
-| `POST` | `/api/v1/auth/register` | Public | Регистрация нового аккаунта |
-| `POST` | `/api/v1/auth/login` | Public | Аутентификация и получение JWT |
-| `GET` | `/api/v1/users/me` | User | Получение профиля текущего пользователя |
-| `PATCH` | `/api/v1/users/change-password` | User | Смена пароля учетной записи |
-
-### Управление SMTP-отправителями
-| Метод | Эндпоинт | Доступ | Описание |
-| :--- | :--- | :--- | :--- |
-| `GET` | `/api/v1/senders` | User | Список подключенных SMTP-ящиков пользователя |
-| `POST` | `/api/v1/senders/register` | User | Привязка и шифрование нового ящика (Яндекс) |
-| `GET` | `/api/v1/senders/{id}` | User | Получение информации о конкретном ящике |
-| `DELETE` | `/api/v1/senders/{id}` | User | Удаление ящика и инвалидация его SMTP-кэша |
-
-### Движок рассылок и телеметрия
-| Метод | Эндпоинт | Доступ | Описание |
-| :--- | :--- | :--- | :--- |
-| `POST` | `/api/v1/notifications/send` | User | Постановка рассылки (одиночной/пакетной) в очередь |
-| `GET` | `/api/v1/notifications/stats` | Public | Текущие live-показатели очереди и ошибок |
-| `GET` | `/api/v1/notifications/stats/history` | Public | История срезов Throughput для графиков |
-| `GET` | `/api/v1/notifications/history` | User | Аудит-лог отправленных писем (с хешированными email) |
-| `GET` | `/api/v1/health` | Public | Проверка жизнеспособности сервера (Health check) |
-
----
-
-## 💻 Локальный запуск
-
-### 1. Требования
-* JDK 21
-* Node.js 20+ и npm
-* PostgreSQL 15+
-
-### 2. Клонирование репозитория
-```bash
-git clone https://github.com/sankyqdi/High-Throughput-Notification-Engine.git
-cd High-Throughput-Notification-Engine
-```
-
-### 3. Переменные окружения
-Создайте файл `.env` или экспортируйте переменные в терминале:
-```bash
-export SPRING_DATASOURCE_URL="jdbc:postgresql://localhost:5432/notification_db"
-export SPRING_DATASOURCE_USERNAME="postgres"
-export SPRING_DATASOURCE_PASSWORD="your_password"
-export JWT_SECRET="v9y$B&E)H@McQfTjWnZr4u7x!A%C*F-JaNdRgUkXp2s5v8y/B?E(G+KbPeShVmYq"
-export CRYPTO_AES_SECRET_KEY="16BytesSecretKey"
-```
-
-### 4. Сборка фронтенда
-```bash
-cd frontend
-npm install
-npm run build
-cd ..
-```
-
-### 5. Запуск Spring Boot
-```bash
-./app/gradlew clean bootRun --project-dir app
-```
-
-Приложение и веб-интерфейс будут доступны по адресу: `http://localhost:8080`.
-
----
-
-## 🐳 Сборка в Docker (Multi-stage)
-
-Сборка React SPA и упаковка Spring Boot fat-jar выполняются автоматически внутри единого изолированного контейнера:
-
-```bash
-docker build -t notification-engine .
-docker run -p 8080:8080 \
-  -e SPRING_DATASOURCE_URL="jdbc:postgresql://host.docker.internal:5432/notification_db" \
-  -e SPRING_DATASOURCE_USERNAME="postgres" \
-  -e SPRING_DATASOURCE_PASSWORD="password" \
-  -e JWT_SECRET="v9y$B&E)H@McQfTjWnZr4u7x!A%C*F-JaNdRgUkXp2s5v8y/B?E(G+KbPeShVmYq" \
-  -e CRYPTO_AES_SECRET_KEY="16BytesSecretKey" \
-  notification-engine
-```
-
----
-
-## 🧪 Тестирование
-
-Проект покрыт юнит- и интеграционными тестами с использованием Mockito, AssertJ и Spring Security Test:
-```bash
-./app/gradlew test --project-dir app
-```
-
-* `NotificationEngineServiceTest` — проверка работы блокирующей очереди, обработки сбоев SMTP, graceful shutdown пула и конкурентной изоляции.
-* `NotificationControllerTest` — интеграционные тесты контроллеров с проверкой валидации DTO (`@Valid`, `@Size`, `@Email`).
-* `SecurityIntegrationTest` — сквозные тесты фильтрации JWT, разграничения публичных и защищенных маршрутов.
+`SenderAccount` — отдельная сохраняемая модель аккаунта отправителя. В текущем потоке постановки уведомлений данные отправителя для письма поступают из `User` внутри запроса и `TaskDTO`; `SenderAccountService` отдельно управляет зарегистрированными аккаунтами. `EngineStatsService` также является отдельным сервисом хранения статистики, тогда как live-статистика в контроллере читается из счётчиков `NotificationEngineService`.
